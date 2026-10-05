@@ -163,6 +163,6 @@
 
 @media (min-width: 721px) {
   .login-card {
-    width: min(65.8vw, calc((100dvh - 16px) * 0.546));
+    width: min(55.93vw, calc((100dvh - 16px) * 0.464));
   }
 }
