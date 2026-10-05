@@ -1325,7 +1325,7 @@
   }
 
   .rail__nav {
-    flex: 5 1 0;
+    flex: 4 1 0;
   }
 
   .rail__foot {
@@ -1362,7 +1362,8 @@
     height: 22px;
   }
 
-  .rail button.rail__games {
+  .rail button.rail__games,
+  .rail button.rail__kids {
     display: none;
   }
 
