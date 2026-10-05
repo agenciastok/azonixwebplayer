@@ -41,11 +41,10 @@ export function FolderPicker({
           setOpen(true);
         }}
       >
-        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="11" cy="11" r="7" />
-          <path d="m20 20-3.5-3.5" />
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <path d="M4 7h16M4 12h16M4 17h16" />
         </svg>
-        Buscar pastas
+        Selecionar pasta
       </button>
       {open ? (
         <div className="folder-sheet" role="dialog" aria-modal="true" aria-label="Buscar pastas">

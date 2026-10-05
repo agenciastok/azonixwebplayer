@@ -94,9 +94,9 @@
 }
 
 .folder-search {
+  display: none;
   width: calc(100% - 24px);
   margin: 0 12px 8px;
-  display: flex;
   align-items: center;
   justify-content: flex-start;
   gap: 8px;
@@ -1397,15 +1397,16 @@
   }
 
   .folder-row .cat,
-  .folder-row .live__cat,
+  .folder-row .live__cat {
+    display: none;
+  }
+
   .folder-row .folder-search {
-    width: auto;
-    flex: 0 0 auto;
-    max-width: 220px;
+    display: flex;
+    width: 100%;
+    max-width: none;
+    flex: 1 1 auto;
     margin: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   .folder-sheet .side__search {
