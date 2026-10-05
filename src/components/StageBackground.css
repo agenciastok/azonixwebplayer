@@ -1,0 +1,19 @@
+.scene {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: url("/brand/stage.png") center / cover no-repeat;
+  background-color: #020403;
+}
+
+.scene::after {
+  content: "";
+  position: absolute;
+  left: 22%;
+  right: 22%;
+  top: 64%;
+  height: 18vh;
+  background: radial-gradient(ellipse at center, rgba(190, 255, 214, 0.55), rgba(20, 220, 90, 0.22) 42%, transparent 72%);
+  filter: blur(10px);
+}
