@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { groupsInOrder, isAdultItem, newestFirst } from "../lib/catalog";
 import type { MediaItem } from "../lib/types";
+import { FolderPicker } from "./FolderPicker";
 import { PosterGrid } from "./Poster";
 
 type BrowseProps = {
@@ -54,6 +55,11 @@ export function BrowseView({ kindLabel, searchLabel, items, loading, error, favo
           <input value={query} placeholder={searchLabel} onChange={(event) => setQuery(event.target.value)} />
         </label>
         <div className="folder-row">
+          <FolderPicker
+            folders={[...VIRTUAL, ...folders.filter((group) => !VIRTUAL.includes(group as (typeof VIRTUAL)[number]))]}
+            current={folder}
+            onSelect={setFolder}
+          />
           {VIRTUAL.map((name) => (
             <button key={name} className={`cat ${folder === name ? "is-on" : ""}`} onClick={() => setFolder(name)}>
               {name === "FAVORITOS" ? "♥  FAVORITOS" : name}

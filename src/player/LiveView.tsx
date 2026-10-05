@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { groupsInOrder, isAdultItem } from "../lib/catalog";
 import type { MediaItem } from "../lib/types";
 import { CoverImage } from "./CoverImage";
+import { FolderPicker } from "./FolderPicker";
 import { MiniPlayer } from "./MiniPlayer";
 
 type LiveProps = {
@@ -64,6 +65,11 @@ export function LiveView({ items, loading, error, favorites, hideAdult, suspende
           <input value={query} placeholder="Buscar" onChange={(event) => setQuery(event.target.value)} />
         </label>
         <div className="folder-row">
+          <FolderPicker
+            folders={["Favoritos", "Lista de Canais", ...folders.filter((group) => group !== "Favoritos" && group !== "Lista de Canais")]}
+            current={folder}
+            onSelect={setFolder}
+          />
           <button className={`live__cat ${folder === "Favoritos" ? "is-on" : ""}`} onClick={() => setFolder("Favoritos")}>★ Favoritos</button>
           <button className={`live__cat ${folder === "Lista de Canais" ? "is-on" : ""}`} onClick={() => setFolder("Lista de Canais")}>☰ Lista de Canais</button>
           {folders.map((group) => (

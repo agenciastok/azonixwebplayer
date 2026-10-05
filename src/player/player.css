@@ -93,6 +93,130 @@
   display: block;
 }
 
+.folder-search {
+  width: calc(100% - 24px);
+  margin: 0 12px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  border: 1px solid rgba(90, 255, 150, 0.7);
+  border-radius: 8px;
+  background: rgba(12, 32, 20, 0.72);
+  color: #d9ffe6;
+  text-align: left;
+  padding: 11px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.folder-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  align-items: end;
+  justify-items: center;
+}
+
+.folder-sheet__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(0, 0, 0, 0.62);
+  cursor: pointer;
+}
+
+.folder-sheet__panel {
+  position: relative;
+  z-index: 1;
+  width: min(520px, 100%);
+  max-height: min(78dvh, 720px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+  border-radius: 16px 16px 0 0;
+  background: #101614;
+  border: 1px solid rgba(232, 238, 234, 0.22);
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.folder-sheet__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.folder-sheet__bar h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.folder-sheet__bar button {
+  border: 0;
+  background: transparent;
+  color: #d9ffe6;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.folder-sheet .side__search {
+  margin: 0;
+  flex: none;
+}
+
+.folder-sheet .side__search input {
+  font-size: 16px;
+}
+
+.folder-sheet__list {
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.folder-sheet__list button {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid rgba(232, 238, 234, 0.28);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.34);
+  color: #f4f6f5;
+  text-align: left;
+  padding: 12px 14px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.folder-sheet__list button.is-on {
+  border-color: rgba(90, 255, 150, 0.9);
+  background: linear-gradient(180deg, #3ef07c, #14b85a);
+  color: #fff;
+  font-weight: 800;
+}
+
+.folder-sheet__list p {
+  margin: 8px 0;
+  color: rgba(232, 238, 234, 0.72);
+}
+
+@media (min-width: 721px) {
+  .folder-sheet {
+    align-items: center;
+    padding: 24px;
+  }
+
+  .folder-sheet__panel {
+    border-radius: 16px;
+    padding-bottom: 16px;
+  }
+}
+
 .home,
 .account,
 .games {
@@ -1273,7 +1397,8 @@
   }
 
   .folder-row .cat,
-  .folder-row .live__cat {
+  .folder-row .live__cat,
+  .folder-row .folder-search {
     width: auto;
     flex: 0 0 auto;
     max-width: 220px;
@@ -1281,6 +1406,10 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .folder-sheet .side__search {
+    margin: 0;
   }
 
   .live__head span,
