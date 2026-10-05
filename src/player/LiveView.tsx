@@ -63,11 +63,13 @@ export function LiveView({ items, loading, error, favorites, hideAdult, suspende
           <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
           <input value={query} placeholder="Buscar" onChange={(event) => setQuery(event.target.value)} />
         </label>
-        <button className={`live__cat ${folder === "Favoritos" ? "is-on" : ""}`} onClick={() => setFolder("Favoritos")}>★ Favoritos</button>
-        <button className={`live__cat ${folder === "Lista de Canais" ? "is-on" : ""}`} onClick={() => setFolder("Lista de Canais")}>☰ Lista de Canais</button>
-        {folders.map((group) => (
-          <button key={group} className={`live__cat ${folder === group ? "is-on" : ""}`} onClick={() => setFolder(group)}>{group}</button>
-        ))}
+        <div className="folder-row">
+          <button className={`live__cat ${folder === "Favoritos" ? "is-on" : ""}`} onClick={() => setFolder("Favoritos")}>★ Favoritos</button>
+          <button className={`live__cat ${folder === "Lista de Canais" ? "is-on" : ""}`} onClick={() => setFolder("Lista de Canais")}>☰ Lista de Canais</button>
+          {folders.map((group) => (
+            <button key={group} className={`live__cat ${folder === group ? "is-on" : ""}`} onClick={() => setFolder(group)}>{group}</button>
+          ))}
+        </div>
       </aside>
       <div className="live__list" ref={listRef}>
         <div className="live__head"><span>Lista de Canais</span><span>{loading ? "…" : `${channels.length} canais`}</span></div>

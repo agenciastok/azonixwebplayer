@@ -13,7 +13,7 @@ export function KidsView({ items, loading, error, onOpen }: { items: MediaItem[]
 
   return (
     <section className="kids">
-      <aside>
+      <aside className="kids__side">
         <div className="kids__panel">
           <h2>KIDS</h2>
           <label className="kids__search">

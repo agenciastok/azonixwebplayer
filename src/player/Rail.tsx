@@ -29,6 +29,7 @@ export function Rail({ page, onChange, onRefresh }: RailProps) {
         {items.map((item) => (
           <button key={item.page} className={page === item.page ? "is-on" : ""} aria-label={item.label} onClick={() => onChange(item.page)}>
             <Icon path={item.path} />
+            <span className="rail__label">{item.label}</span>
           </button>
         ))}
         <button className={`rail__kids ${page === "kids" ? "is-on" : ""}`} onClick={() => onChange("kids")}>
@@ -36,14 +37,17 @@ export function Rail({ page, onChange, onRefresh }: RailProps) {
         </button>
         <button className={page === "games" ? "is-on" : ""} aria-label="Jogos do dia" onClick={() => onChange("games")}>
           <Icon path="M12 4a8 8 0 1 0 8 8M12 8v4l3 2M8 14h.01M16 14h.01" />
+          <span className="rail__label">Jogos</span>
         </button>
       </nav>
       <div className="rail__foot">
         <button className={page === "account" ? "is-on" : ""} aria-label="Conta" onClick={() => onChange("account")}>
           <Icon path="M12 15.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6M5 19.2A7.2 7.2 0 0 1 12 15a7.2 7.2 0 0 1 7 4.2" />
+          <span className="rail__label">Conta</span>
         </button>
         <button aria-label="Atualizar lista" onClick={onRefresh}>
           <Icon path="M20 12a8 8 0 1 1-2.2-5.5M20 4v5h-5" />
+          <span className="rail__label">Atualizar</span>
         </button>
       </div>
     </aside>

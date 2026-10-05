@@ -53,16 +53,18 @@ export function BrowseView({ kindLabel, searchLabel, items, loading, error, favo
           <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
           <input value={query} placeholder={searchLabel} onChange={(event) => setQuery(event.target.value)} />
         </label>
-        {VIRTUAL.map((name) => (
-          <button key={name} className={`cat ${folder === name ? "is-on" : ""}`} onClick={() => setFolder(name)}>
-            {name === "FAVORITOS" ? "♥  FAVORITOS" : name}
-          </button>
-        ))}
-        {folders.map((group) => (
-          <button key={group} className={`cat ${folder === group ? "is-on" : ""}`} onClick={() => setFolder(group)}>
-            ◆ {group}
-          </button>
-        ))}
+        <div className="folder-row">
+          {VIRTUAL.map((name) => (
+            <button key={name} className={`cat ${folder === name ? "is-on" : ""}`} onClick={() => setFolder(name)}>
+              {name === "FAVORITOS" ? "♥  FAVORITOS" : name}
+            </button>
+          ))}
+          {folders.map((group) => (
+            <button key={group} className={`cat ${folder === group ? "is-on" : ""}`} onClick={() => setFolder(group)}>
+              ◆ {group}
+            </button>
+          ))}
+        </div>
       </aside>
       <div
         className="browse__main"
