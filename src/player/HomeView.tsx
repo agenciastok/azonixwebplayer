@@ -29,16 +29,17 @@ export function HomeView({ hero, movies, series, onOpen, onBrand, loading, error
       {loading ? <p className="status-line">Carregando destaques…</p> : null}
       {error ? <p className="status-line">{error}</p> : null}
       <section className="hero">
-        <div>
-          <h1>{hero?.name || "AZONIX PLAY"}</h1>
-          <p><b>Direção:</b> {hero?.director || "—"}</p>
-          <p><b>Duração:</b> <span className="pill">{hero?.duration || "—"}</span></p>
-          <p><b>Gênero:</b> {hero?.genre || hero?.group || "—"}</p>
-          <p><b>Elenco:</b> {hero?.cast || "—"}</p>
-          <p><b>Descricao</b></p>
-          <p className="hero__plot">{hero?.plot || "Abra um filme para ver a sinopse completa."}</p>
-        </div>
-        <button className="hero__art" style={{ backgroundImage: hero?.logo ? `url("${proxiedImage(hero.logo)}")` : undefined }} onClick={() => hero && onOpen(hero)} aria-label={hero?.name || "Destaque"} />
+        <button
+          className="hero__art"
+          style={{ backgroundImage: hero?.logo ? `url("${proxiedImage(hero.logo)}")` : undefined }}
+          onClick={() => hero && onOpen(hero)}
+          aria-label={hero?.name || "Destaque"}
+        >
+          <span className="hero__copy">
+            <h1>{hero?.name || "AZONIX PLAY"}</h1>
+            <p className="hero__plot">{hero?.plot || "Abra um filme para ver a sinopse completa."}</p>
+          </span>
+        </button>
       </section>
       <h2>Escolha seu Streaming</h2>
       <div className="brands">
