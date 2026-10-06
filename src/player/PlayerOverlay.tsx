@@ -10,6 +10,22 @@ function clock(seconds: number) {
   return `${String(minutes).padStart(2, "0")}:${String(remain).padStart(2, "0")}`;
 }
 
+function storedVolume() {
+  const saved = Number(localStorage.getItem("azonix.volume"));
+  if (!Number.isFinite(saved)) return 1;
+  return Math.min(1, Math.max(0, saved));
+}
+
+function VolumeIcon({ level }: { level: number }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 10h3.2L12 6.5v11L7.2 14H4z" />
+      {level === 0 ? <path d="m16 10 4 4m0-4-4 4" /> : <path d="M16 9.5a4 4 0 0 1 0 5" />}
+      {level > 0.5 ? <path d="M18.5 7.5a7 7 0 0 1 0 9" /> : null}
+    </svg>
+  );
+}
+
 export function PlayerOverlay({
   title,
   url,
@@ -36,7 +52,11 @@ export function PlayerOverlay({
   const [info, setInfo] = useState(false);
   const [chrome, setChrome] = useState(true);
   const [moveTick, setMoveTick] = useState(0);
+  const [volume, setVolume] = useState(storedVolume);
   const lastMove = useRef(0);
+  const volumeRef = useRef(volume);
+  const audibleRef = useRef(volume > 0 ? volume : 1);
+  volumeRef.current = volume;
 
   useEffect(() => {
     const video = videoRef.current;
@@ -45,6 +65,7 @@ export function PlayerOverlay({
     setFailed("");
     setCurrent(0);
     setDuration(0);
+    video.volume = volumeRef.current;
     const stop = startPlayback(video, url, {
       live,
       onReady: () => setStatus(""),
@@ -111,6 +132,19 @@ export function PlayerOverlay({
     video.currentTime = Math.min(video.duration, Math.max(0, video.currentTime + delta));
   }
 
+  function changeVolume(next: number) {
+    const value = Math.min(1, Math.max(0, next));
+    if (value > 0) audibleRef.current = value;
+    setVolume(value);
+    const video = videoRef.current;
+    if (video) video.volume = value;
+    localStorage.setItem("azonix.volume", String(value));
+  }
+
+  function toggleMute() {
+    changeVolume(volume === 0 ? audibleRef.current || 1 : 0);
+  }
+
   useEffect(() => {
     const sync = () => setFull(document.fullscreenElement === rootRef.current);
     document.addEventListener("fullscreenchange", sync);
@@ -168,6 +202,21 @@ export function PlayerOverlay({
             </div>
             <div className="stage__row">
               <strong>{title}</strong>
+              <div className="volume">
+                <button type="button" className="volume__btn" onClick={toggleMute} aria-label={volume === 0 ? "Ativar som" : "Silenciar"}>
+                  <VolumeIcon level={volume} />
+                </button>
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  value={volume}
+                  aria-label="Volume"
+                  style={{ background: `linear-gradient(90deg, #3aee78 ${volume * 100}%, rgba(255,255,255,0.35) ${volume * 100}%)` }}
+                  onChange={(event) => changeVolume(Number(event.target.value))}
+                />
+              </div>
               <div className="keys">
                 <button onClick={onClose}><small>EXIT</small>Sair</button>
                 <button onClick={toggle}><small>OK</small>Play/Pausar</button>

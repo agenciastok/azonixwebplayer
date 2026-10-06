@@ -1195,8 +1195,57 @@
 
 .stage__row strong {
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 16px;
   font-weight: 650;
+}
+
+.volume {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 180px;
+  flex: none;
+}
+
+.volume__btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.volume__btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.volume input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  margin: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+}
+
+.volume input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
 }
 
 .keys {
@@ -1584,6 +1633,10 @@
   .stage__thumb {
     width: 64px;
     height: 40px;
+  }
+
+  .volume {
+    display: none;
   }
 
   .stage__row {
