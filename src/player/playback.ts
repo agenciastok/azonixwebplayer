@@ -1,5 +1,6 @@
 import Hls from "hls.js";
 import mpegts from "mpegts.js";
+import { liveAttempts, type StreamAttempt } from "./streamUrl";
 
 const DIRECT_FAILURE = "Não foi possível reproduzir direto do servidor de conteúdo.";
 
@@ -18,8 +19,9 @@ function attachFile(video: HTMLVideoElement, src: string, onFatal: () => void) {
 }
 
 function attachHls(video: HTMLVideoElement, src: string, onFatal: () => void) {
+  const nativeHls = video.canPlayType("application/vnd.apple.mpegurl") || video.canPlayType("application/x-mpegURL");
   if (!Hls.isSupported()) {
-    if (video.canPlayType("application/vnd.apple.mpegurl")) return attachFile(video, src, onFatal);
+    if (nativeHls) return attachFile(video, src, onFatal);
     onFatal();
     return () => undefined;
   }
@@ -136,17 +138,28 @@ export function startPlayback(video: HTMLVideoElement, url: string, handlers: Ha
 
   const giveUp = () => fail(DIRECT_FAILURE);
 
+  const playAttempt = (attempt: StreamAttempt, onFatal: () => void) => {
+    if (attempt.kind === "ts") openTs(attempt.src, onFatal);
+    else if (attempt.kind === "hls") release = attachHls(video, attempt.src, onFatal);
+    else release = attachFile(video, attempt.src, onFatal);
+  };
+
   if (handlers.live) {
-    const tsUrl = url.replace(/\.m3u8(?=($|\?))/i, ".ts");
-    if (tsUrl === url) openTs(url, giveUp);
-    else {
-      openTs(tsUrl, () => {
+    const attempts = liveAttempts(url, window.location.protocol);
+    const playAt = (index: number) => {
+      const attempt = attempts[index];
+      if (!attempt) {
+        giveUp();
+        return;
+      }
+      playAttempt(attempt, () => {
         if (stopped) return;
         clearEngine();
         if (stopped) return;
-        release = attachHls(video, url, giveUp);
+        playAt(index + 1);
       });
-    }
+    };
+    playAt(0);
   } else if (/\.m3u8(\?|$)/i.test(url)) {
     release = attachHls(video, url, giveUp);
   } else if (/\.ts(\?|$)/i.test(url)) {

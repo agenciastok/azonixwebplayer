@@ -1,12 +1,13 @@
 import { Readable } from "node:stream";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Plugin } from "vite";
-import { GET } from "../api/proxy/playlist";
+import { GET as playlist } from "../api/proxy/playlist";
+import { GET as stream } from "../api/proxy/stream";
 
-async function handle(req: IncomingMessage, res: ServerResponse) {
+async function handle(req: IncomingMessage, res: ServerResponse, get: (request: Request) => Promise<Response>) {
   try {
     const request = new Request(new URL(req.url ?? "", "http://localhost"));
-    const response = await GET(request);
+    const response = await get(request);
     res.statusCode = response.status;
     response.headers.forEach((value, key) => {
       res.setHeader(key, value);
@@ -35,12 +36,18 @@ export function iptvProxy(): Plugin {
     name: "azonix-catalog-proxy",
     configureServer(server) {
       server.middlewares.use("/api/proxy/playlist", (req, res) => {
-        void handle(req, res);
+        void handle(req, res, playlist);
+      });
+      server.middlewares.use("/api/proxy/stream", (req, res) => {
+        void handle(req, res, stream);
       });
     },
     configurePreviewServer(server) {
       server.middlewares.use("/api/proxy/playlist", (req, res) => {
-        void handle(req, res);
+        void handle(req, res, playlist);
+      });
+      server.middlewares.use("/api/proxy/stream", (req, res) => {
+        void handle(req, res, stream);
       });
     },
   };
