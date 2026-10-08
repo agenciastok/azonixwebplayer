@@ -1,84 +1,7 @@
 import Hls from "hls.js";
 import mpegts from "mpegts.js";
-import { upstream } from "../lib/proxy";
 
-type Kind = "hls" | "ts" | "file";
-
-type Probe = { kind: Kind; src: string };
-
-type Handlers = {
-  live: boolean;
-  onReady: () => void;
-  onFailure: (message: string) => void;
-};
-
-function playableUrl(media: string) {
-  if (media.startsWith("/api/upstream")) return media;
-  try {
-    const parsed = new URL(media, window.location.origin);
-    if (parsed.origin === window.location.origin && parsed.pathname === "/api/upstream") {
-      return `${parsed.pathname}${parsed.search}`;
-    }
-    if (parsed.protocol === "http:" || parsed.protocol === "https:") return upstream(parsed.href);
-  } catch {
-    return media;
-  }
-  return media;
-}
-
-function firstMediaLine(playlist: string) {
-  for (const line of playlist.split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-    return trimmed;
-  }
-  return "";
-}
-
-async function readHead(response: Response) {
-  const reader = response.body?.getReader();
-  if (!reader) return new Uint8Array();
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-  while (total < 4096) {
-    const next = await reader.read();
-    if (next.done) break;
-    chunks.push(next.value);
-    total += next.value.byteLength;
-  }
-  await reader.cancel().catch(() => undefined);
-  const head = new Uint8Array(total);
-  let offset = 0;
-  chunks.forEach((chunk) => {
-    head.set(chunk, offset);
-    offset += chunk.byteLength;
-  });
-  return head;
-}
-
-async function probeStream(url: string): Promise<Probe> {
-  const source = upstream(url);
-  const response = await fetch(source);
-  if (!response.ok) throw new Error(response.status === 404 ? "Conteúdo indisponível." : `O servidor recusou a reprodução (${response.status}).`);
-  const head = await readHead(response);
-  const text = new TextDecoder("utf-8", { fatal: false }).decode(head).replace(/^\uFEFF/, "").trimStart();
-  if (text.startsWith("#EXTM3U")) {
-    if (/#EXT-X-TARGETDURATION|#EXT-X-STREAM-INF|#EXT-X-MEDIA-SEQUENCE/i.test(text)) {
-      return { kind: "hls", src: source };
-    }
-    const media = firstMediaLine(text);
-    if (!media || /\.m3u8(\?|$)/i.test(media)) return { kind: "hls", src: source };
-    if (/\.(mp4|m4v|webm)(\?|$)/i.test(media)) return { kind: "file", src: playableUrl(media) };
-    return { kind: "ts", src: playableUrl(media) };
-  }
-  if (head[0] === 0x47) return { kind: "ts", src: source };
-  const type = response.headers.get("content-type") || "";
-  if (/\.(mp4|m4v|webm)(\?|$)/i.test(url) || type.includes("mp4") || type.includes("webm")) {
-    return { kind: "file", src: source };
-  }
-  if (/\.m3u8(\?|$)/i.test(url)) return { kind: "hls", src: source };
-  return { kind: "file", src: source };
-}
+const DIRECT_FAILURE = "Não foi possível reproduzir direto do servidor de conteúdo.";
 
 function attachFile(video: HTMLVideoElement, src: string, onFatal: () => void) {
   let active = true;
@@ -175,10 +98,15 @@ function attachTs(video: HTMLVideoElement, src: string, live: boolean, onFatal: 
   };
 }
 
+type Handlers = {
+  live: boolean;
+  onReady: () => void;
+  onFailure: (message: string) => void;
+};
+
 export function startPlayback(video: HTMLVideoElement, url: string, handlers: Handlers) {
   let stopped = false;
   let release = () => undefined as void;
-  let triedTs = false;
   const ready = () => {
     if (video.playbackRate !== 1) video.playbackRate = 1;
     if (!stopped) handlers.onReady();
@@ -206,43 +134,25 @@ export function startPlayback(video: HTMLVideoElement, url: string, handlers: Ha
     release = attachTs(video, src, handlers.live, onFatal);
   };
 
+  const giveUp = () => fail(DIRECT_FAILURE);
+
   if (handlers.live) {
     const tsUrl = url.replace(/\.m3u8(?=($|\?))/i, ".ts");
-    const giveUp = () => fail("Não foi possível reproduzir.");
-    if (tsUrl === url) openTs(upstream(url), giveUp);
+    if (tsUrl === url) openTs(url, giveUp);
     else {
-      openTs(upstream(tsUrl), () => {
+      openTs(tsUrl, () => {
         if (stopped) return;
         clearEngine();
         if (stopped) return;
-        release = attachHls(video, upstream(url), giveUp);
+        release = attachHls(video, url, giveUp);
       });
     }
+  } else if (/\.m3u8(\?|$)/i.test(url)) {
+    release = attachHls(video, url, giveUp);
+  } else if (/\.ts(\?|$)/i.test(url)) {
+    openTs(url, giveUp);
   } else {
-    const fallback = () => {
-      if (stopped) return;
-      const tsUrl = url.replace(/\.m3u8(?=($|\?))/i, ".ts");
-      if (triedTs || tsUrl === url) {
-        fail("Não foi possível reproduzir.");
-        return;
-      }
-      triedTs = true;
-      clearEngine();
-      if (stopped) return;
-      openTs(upstream(tsUrl), () => fail("Não foi possível reproduzir."));
-    };
-
-    void (async () => {
-      try {
-        const probe = await probeStream(url);
-        if (stopped) return;
-        if (probe.kind === "hls") release = attachHls(video, probe.src, fallback);
-        else if (probe.kind === "ts") openTs(probe.src, () => fail("Não foi possível reproduzir."));
-        else release = attachFile(video, probe.src, () => fail("Não foi possível reproduzir este vídeo."));
-      } catch (error) {
-        fail(error instanceof Error ? error.message : "Não foi possível reproduzir.");
-      }
-    })();
+    release = attachFile(video, url, giveUp);
   }
 
   return () => {
