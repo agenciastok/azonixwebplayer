@@ -42,13 +42,9 @@ export function HomeView({ hero, movies, series, onOpen, onBrand, loading, error
             Assistir
           </button>
         </div>
-        <button
-          className="hero__art"
-          type="button"
-          style={{ backgroundImage: hero?.logo ? `url("${hero.logo.replace(/["\\]/g, "\\$&")}")` : undefined }}
-          onClick={() => hero && onOpen(hero)}
-          aria-label={hero?.name || "Destaque"}
-        />
+        <button className="hero__art" type="button" onClick={() => hero && onOpen(hero)} aria-label={hero?.name || "Destaque"}>
+          <CoverImage className="hero__art-img" url={hero?.logo} alt="" />
+        </button>
       </section>
       <h2>Escolha seu Streaming</h2>
       <div className="brands">

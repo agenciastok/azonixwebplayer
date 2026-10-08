@@ -5,5 +5,5 @@ export function CoverImage({ url, className, alt = "" }: { url?: string; classNa
   const clean = url?.trim();
   const fallbackClass = className ? `${className} cover-fallback` : "cover-fallback";
   if (!clean || failed) return <span className={fallbackClass} aria-hidden="true" />;
-  return <img className={className} src={clean} alt={alt} loading="lazy" decoding="async" fetchPriority="low" onError={() => setFailed(true)} />;
+  return <img className={className} src={clean} alt={alt} referrerPolicy="no-referrer" loading="lazy" decoding="async" fetchPriority="low" onError={() => setFailed(true)} />;
 }

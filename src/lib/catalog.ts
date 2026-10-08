@@ -14,10 +14,31 @@ function authQuery(session: Session) {
   return `username=${encodeURIComponent(session.username)}&password=${encodeURIComponent(session.password)}`;
 }
 
+function isPlayerApi(url: string) {
+  try {
+    return new URL(url).pathname.toLowerCase().endsWith("/player_api.php");
+  } catch {
+    return false;
+  }
+}
+
+async function fetchCatalog(url: string) {
+  const parsed = new URL(url);
+  if (isPlayerApi(url) && parsed.protocol === "https:") {
+    try {
+      return await fetch(url);
+    } catch {
+      // The provider blocked the browser. The light list route below is text only.
+    }
+  }
+  if (!isPlayerApi(url)) return fetch(url);
+  return fetch(`/api/iptv/proxy?url=${encodeURIComponent(url)}`);
+}
+
 async function readJson(url: string) {
   let response: Response;
   try {
-    response = await fetch(url);
+    response = await fetchCatalog(url);
   } catch {
     throw new Error("Não foi possível consultar a lista direto no servidor.");
   }
