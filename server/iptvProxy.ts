@@ -1,17 +1,12 @@
 import { Readable } from "node:stream";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Plugin } from "vite";
-import { catalogProxyError, proxyPlaylist } from "./catalogProxy";
+import { GET } from "../api/proxy/playlist";
 
 async function handle(req: IncomingMessage, res: ServerResponse) {
-  const controller = new AbortController();
-  res.on("close", () => {
-    if (!res.writableEnded) controller.abort();
-  });
   try {
-    const requestUrl = new URL(req.url ?? "", "http://localhost");
-    const target = requestUrl.searchParams.get("url");
-    const response = target ? await proxyPlaylist(target, controller.signal) : catalogProxyError("URL ausente", 400);
+    const request = new Request(new URL(req.url ?? "", "http://localhost"));
+    const response = await GET(request);
     res.statusCode = response.status;
     response.headers.forEach((value, key) => {
       res.setHeader(key, value);
@@ -29,8 +24,8 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
     });
     stream.pipe(res);
   } catch (error) {
-    if (controller.signal.aborted || res.writableEnded) return;
-    if (!res.headersSent) res.statusCode = 502;
+    if (res.writableEnded) return;
+    if (!res.headersSent) res.statusCode = 500;
     res.end(error instanceof Error ? error.message : "Falha ao consultar a lista");
   }
 }
