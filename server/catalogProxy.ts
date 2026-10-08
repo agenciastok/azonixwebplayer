@@ -2,7 +2,7 @@ const BROWSER_UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
 const MEDIA_PATH = /\.(m3u8?|ts|mp4|m4v|mkv|webm|aac|mp3|flv|avi|mpg|mpeg|mov|m4a|ogg|opus)(\?|$)/i;
-const VIDEO_TYPE = /^video\/|mp2t|mpegts|mpegurl/i;
+const VIDEO_TYPE = /^video\/|mp2t|mpegts/i;
 
 function blockedHost(hostname: string) {
   const host = hostname.toLowerCase().replace(/^\[|\]$/g, "");
@@ -17,14 +17,15 @@ export function catalogProxyError(message: string, status: number) {
   return new Response(message, { status, headers: { "cache-control": "no-store" } });
 }
 
-function isPlayerApi(url: URL) {
-  return url.pathname.toLowerCase().endsWith("/player_api.php") && !MEDIA_PATH.test(url.pathname);
+function isListEndpoint(url: URL) {
+  const path = url.pathname.toLowerCase();
+  return path.endsWith("/player_api.php") || path.endsWith("/get.php");
 }
 
 function rejectTarget(url: URL): Response | null {
   if (url.protocol !== "http:" && url.protocol !== "https:") return catalogProxyError("Protocolo não permitido", 400);
   if (MEDIA_PATH.test(url.pathname)) return catalogProxyError("URL de mídia não é aceita.", 400);
-  if (!isPlayerApi(url)) return catalogProxyError("Só a lista do player_api.php pode passar por aqui.", 400);
+  if (!isListEndpoint(url)) return catalogProxyError("Só get.php e player_api.php podem passar por aqui.", 400);
   if (blockedHost(url.hostname)) return catalogProxyError("Host bloqueado", 403);
   return null;
 }
@@ -48,7 +49,7 @@ async function fetchCatalog(url: URL, signal?: AbortSignal) {
   return upstream;
 }
 
-export async function proxyPlayerApi(target: string, signal?: AbortSignal) {
+export async function proxyPlaylist(target: string, signal?: AbortSignal) {
   let parsed: URL;
   try {
     parsed = new URL(target);
@@ -76,10 +77,7 @@ export async function proxyPlayerApi(target: string, signal?: AbortSignal) {
 
     const headers = new Headers({ "cache-control": "no-store" });
     if (type) headers.set("content-type", type);
-    if (upstream.ok) {
-      headers.set("cache-control", "public, s-maxage=3600");
-      headers.set("cdn-cache-control", "public, s-maxage=3600");
-    }
+    if (upstream.ok) headers.set("cache-control", "public, max-age=1800");
     return new Response(upstream.body, { status: upstream.status, headers });
   }
 

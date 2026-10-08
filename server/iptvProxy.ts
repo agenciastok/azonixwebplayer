@@ -1,7 +1,7 @@
 import { Readable } from "node:stream";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Plugin } from "vite";
-import { catalogProxyError, proxyPlayerApi } from "./catalogProxy";
+import { catalogProxyError, proxyPlaylist } from "./catalogProxy";
 
 async function handle(req: IncomingMessage, res: ServerResponse) {
   const controller = new AbortController();
@@ -11,7 +11,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
   try {
     const requestUrl = new URL(req.url ?? "", "http://localhost");
     const target = requestUrl.searchParams.get("url");
-    const response = target ? await proxyPlayerApi(target, controller.signal) : catalogProxyError("URL ausente", 400);
+    const response = target ? await proxyPlaylist(target, controller.signal) : catalogProxyError("URL ausente", 400);
     res.statusCode = response.status;
     response.headers.forEach((value, key) => {
       res.setHeader(key, value);
@@ -39,12 +39,12 @@ export function iptvProxy(): Plugin {
   return {
     name: "azonix-catalog-proxy",
     configureServer(server) {
-      server.middlewares.use("/api/iptv/proxy", (req, res) => {
+      server.middlewares.use("/api/proxy/playlist", (req, res) => {
         void handle(req, res);
       });
     },
     configurePreviewServer(server) {
-      server.middlewares.use("/api/iptv/proxy", (req, res) => {
+      server.middlewares.use("/api/proxy/playlist", (req, res) => {
         void handle(req, res);
       });
     },
