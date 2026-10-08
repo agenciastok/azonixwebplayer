@@ -1,6 +1,5 @@
 import { parseM3u } from "./m3u";
 import { resolveDns } from "./resolveCode";
-import { upstream } from "./proxy";
 import { saveSession } from "./session";
 import type { AccountInfo, CatalogSection, MediaItem, SeriesDetails, SeriesEpisode, Session } from "./types";
 
@@ -16,7 +15,12 @@ function authQuery(session: Session) {
 }
 
 async function readJson(url: string) {
-  const response = await fetch(upstream(url));
+  let response: Response;
+  try {
+    response = await fetch(url);
+  } catch {
+    throw new Error("Não foi possível consultar a lista direto no servidor.");
+  }
   const text = await response.text();
   if (!response.ok) {
     throw new Error(`Falha ao acessar a lista (${response.status})`);
@@ -188,7 +192,12 @@ async function loadFromApi(session: Session, section: CatalogSection): Promise<M
 
 async function loadFromM3u(session: Session) {
   const url = `${baseOf(session)}/get.php?${authQuery(session)}&type=m3u_plus&output=hls`;
-  const response = await fetch(upstream(url));
+  let response: Response;
+  try {
+    response = await fetch(url);
+  } catch {
+    throw new Error("Não foi possível consultar a lista direto no servidor.");
+  }
   const text = await response.text();
   if (!response.ok || !text.includes("#EXTM3U")) {
     throw new Error("A DNS não retornou a lista. Confira se o endereço inclui a porta do servidor.");

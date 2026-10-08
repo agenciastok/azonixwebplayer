@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { proxiedImage } from "../lib/proxy";
 
 export function CoverImage({ url, className, alt = "" }: { url?: string; className?: string; alt?: string }) {
   const [failed, setFailed] = useState(false);
   const clean = url?.trim();
   const fallbackClass = className ? `${className} cover-fallback` : "cover-fallback";
   if (!clean || failed) return <span className={fallbackClass} aria-hidden="true" />;
-  return <img className={className} src={proxiedImage(clean)} alt={alt} loading="lazy" decoding="async" fetchPriority="low" onError={() => setFailed(true)} />;
+  return <img className={className} src={clean} alt={alt} loading="lazy" decoding="async" fetchPriority="low" onError={() => setFailed(true)} />;
 }

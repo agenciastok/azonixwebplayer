@@ -1,4 +1,3 @@
-import { proxiedImage } from "../lib/proxy";
 import type { MediaItem } from "../lib/types";
 import { CoverImage } from "./CoverImage";
 import type { PlayerPage } from "./Rail";
@@ -46,7 +45,7 @@ export function HomeView({ hero, movies, series, onOpen, onBrand, loading, error
         <button
           className="hero__art"
           type="button"
-          style={{ backgroundImage: hero?.logo ? `url("${proxiedImage(hero.logo)}")` : undefined }}
+          style={{ backgroundImage: hero?.logo ? `url("${hero.logo.replace(/["\\]/g, "\\$&")}")` : undefined }}
           onClick={() => hero && onOpen(hero)}
           aria-label={hero?.name || "Destaque"}
         />
