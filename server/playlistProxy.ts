@@ -57,7 +57,13 @@ export async function GET(request: Request) {
     });
 
     if (!response.ok) {
-      await response.body?.cancel().catch(() => undefined);
+      const failure = await response.text();
+      if (response.status === 403 && /1014|CNAME Cross-User Banned/i.test(failure)) {
+        return plain(
+          `A DNS ${parsed.hostname} está bloqueada no Cloudflare (erro 1014). Atualize a DNS deste código no painel.`,
+          502,
+        );
+      }
       return plain(`Erro no provedor: ${response.status}`, response.status);
     }
 

@@ -38,6 +38,10 @@ async function readJson(url: string) {
   }
   const text = await response.text();
   if (!response.ok) {
+    const detail = text.replace(/\s+/g, " ").trim();
+    if (detail && detail.length < 240 && !detail.startsWith("<") && !detail.startsWith("{")) {
+      throw new Error(detail);
+    }
     throw new Error(`Falha ao acessar a lista (${response.status})`);
   }
   try {
