@@ -1,13 +1,21 @@
 import { Readable } from "node:stream";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Plugin } from "vite";
-import { GET as playlist } from "../api/proxy/playlist";
-import { GET as stream } from "../api/proxy/stream";
+import { corsPreflight, withCors } from "./cors";
+import { GET as playlist } from "./playlistProxy";
+import { GET as stream } from "./streamProxy";
 
 async function handle(req: IncomingMessage, res: ServerResponse, get: (request: Request) => Promise<Response>) {
   try {
+    if (req.method === "OPTIONS") {
+      const preflight = corsPreflight();
+      res.statusCode = preflight.status;
+      preflight.headers.forEach((value, key) => res.setHeader(key, value));
+      res.end();
+      return;
+    }
     const request = new Request(new URL(req.url ?? "", "http://localhost"));
-    const response = await get(request);
+    const response = withCors(await get(request));
     res.statusCode = response.status;
     response.headers.forEach((value, key) => {
       res.setHeader(key, value);

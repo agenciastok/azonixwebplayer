@@ -1,3 +1,5 @@
+import { vpsProxy } from "../src/lib/vps";
+
 export const maxDuration = 60;
 
 const STREAM_PATH = /\.(m3u8|ts)(?=($|\?))/i;
@@ -27,7 +29,7 @@ function targetFrom(request: Request) {
 }
 
 function proxied(absolute: string) {
-  return `/api/proxy/stream?url=${encodeURIComponent(absolute)}`;
+  return vpsProxy("stream", absolute);
 }
 
 function routeMedia(absolute: string) {

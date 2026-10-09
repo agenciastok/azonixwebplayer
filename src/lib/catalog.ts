@@ -1,6 +1,7 @@
 import { parseM3u } from "./m3u";
 import { resolveDns } from "./resolveCode";
 import { saveSession } from "./session";
+import { vpsProxy } from "./vps";
 import type { AccountInfo, CatalogSection, MediaItem, SeriesDetails, SeriesEpisode, Session } from "./types";
 
 const cache = new Map<string, MediaItem[]>();
@@ -25,7 +26,7 @@ function isListRequest(url: string) {
 
 async function fetchCatalog(url: string) {
   if (!isListRequest(url)) return fetch(url);
-  return fetch(`/api/proxy/playlist?url=${encodeURIComponent(url)}`);
+  return fetch(vpsProxy("playlist", url));
 }
 
 async function readJson(url: string) {

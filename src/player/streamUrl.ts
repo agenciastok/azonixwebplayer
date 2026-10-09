@@ -1,3 +1,5 @@
+import { vpsProxy } from "../lib/vps";
+
 export type StreamKind = "ts" | "hls" | "file";
 
 export type StreamAttempt = {
@@ -36,12 +38,11 @@ function kindOf(url: string): StreamKind {
 }
 
 function streamProxy(url: string) {
-  return `/api/proxy/stream?url=${encodeURIComponent(url)}`;
+  return vpsProxy("stream", url);
 }
 
 function targetOf(src: string) {
-  if (!src.startsWith("/api/proxy/stream")) return src;
-  const encoded = /(?:^|[?&])url=([^&]*)/.exec(src)?.[1];
+  const encoded = /\/api\/proxy\/stream\?url=([^&]*)/.exec(src)?.[1];
   if (!encoded) return src;
   try {
     return decodeURIComponent(encoded);

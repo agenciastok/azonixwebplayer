@@ -1,12 +1,5 @@
 {
   "rewrites": [
-    {
-      "source": "/api/proxy/:match*",
-      "destination": "https://azonixwebplayer-webplayer.uegiml.easypanel.host/api/proxy/:match*"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/"
-    }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
