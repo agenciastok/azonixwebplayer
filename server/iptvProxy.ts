@@ -3,6 +3,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Plugin } from "vite";
 import { corsPreflight, withCors } from "./cors";
 import { GET as playlist } from "./playlistProxy";
+import { GET as redirect } from "./redirectProxy";
 import { GET as stream } from "./streamProxy";
 
 async function handle(req: IncomingMessage, res: ServerResponse, get: (request: Request) => Promise<Response>) {
@@ -46,6 +47,9 @@ export function iptvProxy(): Plugin {
       server.middlewares.use("/api/proxy/playlist", (req, res) => {
         void handle(req, res, playlist);
       });
+      server.middlewares.use("/api/proxy/redirect", (req, res) => {
+        void handle(req, res, redirect);
+      });
       server.middlewares.use("/api/proxy/stream", (req, res) => {
         void handle(req, res, stream);
       });
@@ -53,6 +57,9 @@ export function iptvProxy(): Plugin {
     configurePreviewServer(server) {
       server.middlewares.use("/api/proxy/playlist", (req, res) => {
         void handle(req, res, playlist);
+      });
+      server.middlewares.use("/api/proxy/redirect", (req, res) => {
+        void handle(req, res, redirect);
       });
       server.middlewares.use("/api/proxy/stream", (req, res) => {
         void handle(req, res, stream);

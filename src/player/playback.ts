@@ -1,6 +1,7 @@
 import Hls from "hls.js";
 import mpegts from "mpegts.js";
 import { directCandidates } from "../lib/directUrl";
+import { resolveLive } from "./resolveLive";
 import { liveAttempts, type StreamAttempt, type StreamKind } from "./streamUrl";
 
 const DIRECT_FAILURE = "Não foi possível reproduzir direto do servidor de conteúdo.";
@@ -159,11 +160,22 @@ export function startPlayback(video: HTMLVideoElement, url: string, handlers: Ha
       giveUp();
       return;
     }
-    playAttempt(attempt, () => {
+    const begin = (chosen: StreamAttempt) => {
       if (stopped) return;
-      clearEngine();
+      playAttempt(chosen, () => {
+        if (stopped) return;
+        clearEngine();
+        if (stopped) return;
+        playAt(index + 1);
+      });
+    };
+    if (!handlers.live) {
+      begin(attempt);
+      return;
+    }
+    void resolveLive(attempt).then((resolved) => {
       if (stopped) return;
-      playAt(index + 1);
+      begin(resolved);
     });
   };
   playAt(0);

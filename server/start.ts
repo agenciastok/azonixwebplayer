@@ -4,6 +4,7 @@ import path from "node:path";
 import { Readable } from "node:stream";
 import { corsPreflight, withCors } from "./cors";
 import { GET as playlist } from "./playlistProxy";
+import { GET as redirect } from "./redirectProxy";
 import { GET as stream } from "./streamProxy";
 
 const distDir = path.resolve(process.env.DIST_DIR || "dist");
@@ -118,6 +119,10 @@ const server = createServer((req, res) => {
   const pathname = (req.url ?? "/").split("?")[0] || "/";
   if (pathname === "/api/proxy/playlist" || pathname.startsWith("/api/proxy/playlist/")) {
     void handleApi(req, res, playlist);
+    return;
+  }
+  if (pathname === "/api/proxy/redirect" || pathname.startsWith("/api/proxy/redirect/")) {
+    void handleApi(req, res, redirect);
     return;
   }
   if (pathname === "/api/proxy/stream" || pathname.startsWith("/api/proxy/stream/")) {
