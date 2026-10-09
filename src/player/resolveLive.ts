@@ -9,20 +9,28 @@ function kindOf(src: string): StreamKind | null {
   return null;
 }
 
-async function located(url: string) {
+async function ask(url: string) {
   const response = await fetch(`/api/proxy/redirect?url=${encodeURIComponent(url)}`);
   if (!response.ok) return null;
   const data = (await response.json()) as { url?: string };
-  if (!data.url) return null;
-  const next = playableUrl(data.url);
-  if (!next || next === url) return null;
-  return next;
+  if (!data.url || data.url === url) return null;
+  return data.url;
+}
+
+async function located(url: string) {
+  const direct = await ask(url);
+  if (direct) return playableUrl(direct);
+  if (!/^https:\/\//i.test(url)) return null;
+  const insecure = `http://${url.slice("https://".length)}`;
+  const fromHttp = await ask(insecure);
+  if (!fromHttp || fromHttp === insecure) return null;
+  return playableUrl(fromHttp);
 }
 
 export async function resolveLive(attempt: StreamAttempt): Promise<StreamAttempt> {
   try {
     const next = await located(attempt.src);
-    if (!next) return attempt;
+    if (!next || next === attempt.src) return attempt;
     return { src: next, kind: kindOf(next) ?? attempt.kind };
   } catch {
     return attempt;
