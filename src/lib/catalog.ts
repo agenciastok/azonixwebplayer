@@ -1,7 +1,7 @@
+import { directCandidates, playableUrl } from "./directUrl";
 import { parseM3u } from "./m3u";
 import { resolveDns } from "./resolveCode";
 import { saveSession } from "./session";
-import { vpsProxy } from "./vps";
 import type { AccountInfo, CatalogSection, MediaItem, SeriesDetails, SeriesEpisode, Session } from "./types";
 
 const cache = new Map<string, MediaItem[]>();
@@ -25,8 +25,20 @@ function isListRequest(url: string) {
 }
 
 async function fetchCatalog(url: string) {
-  if (!isListRequest(url)) return fetch(url);
-  return fetch(vpsProxy("playlist", url));
+  const targets = directCandidates(url);
+  if (!isListRequest(url)) return fetch(targets[0] ?? url);
+  let last: Response | null = null;
+  for (const target of targets) {
+    try {
+      const response = await fetch(target);
+      if (response.ok || response.status === 401 || response.status === 404) return response;
+      last = response;
+    } catch {
+      // The browser could not read this host. The text route below stays limited to the list.
+    }
+  }
+  if (last) return last;
+  return fetch(`/api/proxy/playlist?url=${encodeURIComponent(url)}`);
 }
 
 async function readJson(url: string) {
@@ -185,11 +197,12 @@ async function loadFromApi(session: Session, section: CatalogSection): Promise<M
     const streamId = String(item.stream_id ?? index);
     const extension = item.container_extension || "mp4";
     const direct = item.direct_source?.trim() || "";
-    const url = /^https?:\/\//i.test(direct)
+    const raw = /^https?:\/\//i.test(direct)
       ? direct
       : section === "live"
         ? `${base}/live/${user}/${pass}/${streamId}.m3u8`
         : `${base}/movie/${user}/${pass}/${streamId}.${extension}`;
+    const url = playableUrl(raw);
     return {
       id: `${section}-${streamId}`,
       name: item.name?.trim() || "Sem nome",
@@ -347,9 +360,11 @@ export async function loadSeriesDetails(session: Session, item: MediaItem): Prom
         season: Number(episode.season || season),
         episode: Number(episode.episode_num || 0),
         title: textOf(episode.title) || `Episódio ${textOf(episode.episode_num) || episodes.length + 1}`,
-        url: /^https?:\/\//i.test(direct)
-          ? direct
-          : `${baseOf(session)}/series/${encodeURIComponent(session.username)}/${encodeURIComponent(session.password)}/${encodeURIComponent(id)}.${extension}`,
+        url: playableUrl(
+          /^https?:\/\//i.test(direct)
+            ? direct
+            : `${baseOf(session)}/series/${encodeURIComponent(session.username)}/${encodeURIComponent(session.password)}/${encodeURIComponent(id)}.${extension}`,
+        ),
         plot: readable(meta.plot || episode.plot),
         duration: formatRuntime(meta.duration_secs, meta.duration),
         rating: textOf(meta.rating) || textOf(episode.rating),

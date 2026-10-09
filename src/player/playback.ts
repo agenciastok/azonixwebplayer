@@ -1,6 +1,7 @@
 import Hls from "hls.js";
 import mpegts from "mpegts.js";
-import { liveAttempts, type StreamAttempt } from "./streamUrl";
+import { directCandidates } from "../lib/directUrl";
+import { liveAttempts, type StreamAttempt, type StreamKind } from "./streamUrl";
 
 const DIRECT_FAILURE = "Não foi possível reproduzir direto do servidor de conteúdo.";
 
@@ -144,29 +145,28 @@ export function startPlayback(video: HTMLVideoElement, url: string, handlers: Ha
     else release = attachFile(video, attempt.src, onFatal);
   };
 
-  if (handlers.live) {
-    const attempts = liveAttempts(url, window.location.protocol);
-    const playAt = (index: number) => {
-      const attempt = attempts[index];
-      if (!attempt) {
-        giveUp();
-        return;
-      }
-      playAttempt(attempt, () => {
-        if (stopped) return;
-        clearEngine();
-        if (stopped) return;
-        playAt(index + 1);
-      });
-    };
-    playAt(0);
-  } else if (/\.m3u8(\?|$)/i.test(url)) {
-    release = attachHls(video, url, giveUp);
-  } else if (/\.ts(\?|$)/i.test(url)) {
-    openTs(url, giveUp);
-  } else {
-    release = attachFile(video, url, giveUp);
-  }
+  const kindOf = (src: string): StreamKind => {
+    if (/\.m3u8(\?|$)/i.test(src)) return "hls";
+    if (/\.ts(\?|$)/i.test(src)) return "ts";
+    return "file";
+  };
+  const attempts = handlers.live
+    ? liveAttempts(url, window.location.protocol)
+    : directCandidates(url).map((src) => ({ src, kind: kindOf(src) }));
+  const playAt = (index: number) => {
+    const attempt = attempts[index];
+    if (!attempt) {
+      giveUp();
+      return;
+    }
+    playAttempt(attempt, () => {
+      if (stopped) return;
+      clearEngine();
+      if (stopped) return;
+      playAt(index + 1);
+    });
+  };
+  playAt(0);
 
   return () => {
     stopped = true;
