@@ -1,1 +1,1 @@
-export { GET, maxDuration, readLocation } from "../api/proxy/redirect.ts";
+export { GET, maxDuration } from "../api/proxy/redirect.ts";

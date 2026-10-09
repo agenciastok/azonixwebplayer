@@ -1,6 +1,3 @@
-import { request as httpRequest } from "node:http";
-import { request as httpsRequest } from "node:https";
-
 export const maxDuration = 10;
 
 const LIVE_PATH = /\.(m3u8|ts)(?=($|\?))/i;
@@ -43,47 +40,37 @@ function targetFrom(request: Request) {
   return decodeURIComponent(encoded);
 }
 
-export function readLocation(target: string) {
-  return new Promise<{ status: number; location: string | null }>((resolve, reject) => {
-    let settled = false;
-    const finish = (value: { status: number; location: string | null }) => {
-      if (settled) return;
-      settled = true;
-      resolve(value);
-    };
-    const fail = (error: unknown) => {
-      if (settled) return;
-      settled = true;
-      reject(error instanceof Error ? error : new Error("Falha ao localizar o canal"));
-    };
-    const url = new URL(target);
-    const send = url.protocol === "https:" ? httpsRequest : httpRequest;
-    const req = send(
-      url,
-      {
-        method: "GET",
-        timeout: 6000,
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-          Accept: "*/*",
-          Connection: "close",
-        },
+async function probe(target: string, method: "HEAD" | "GET") {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 6000);
+  try {
+    const response = await fetch(target, {
+      method,
+      redirect: "follow",
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        Accept: "*/*",
+        ...(method === "GET" ? { Range: "bytes=0-0" } : {}),
       },
-      (res) => {
-        const raw = res.headers.location;
-        const location = Array.isArray(raw) ? raw[0] ?? null : raw ?? null;
-        finish({ status: res.statusCode ?? 0, location });
-        res.destroy();
-        req.destroy();
-      },
-    );
-    req.on("timeout", () => {
-      req.destroy();
-      fail(new Error("timeout"));
+      signal: controller.signal,
     });
-    req.on("error", fail);
-    req.end();
-  });
+    const finalUrl = response.url || target;
+    const status = response.status;
+    await response.body?.cancel().catch(() => undefined);
+    return { status, finalUrl };
+  } finally {
+    clearTimeout(timer);
+    controller.abort();
+  }
+}
+
+async function readLocation(target: string) {
+  const head = await probe(target, "HEAD");
+  if (head.finalUrl !== target) return head.finalUrl;
+  if (head.status !== 404 && head.status !== 405 && head.status !== 501) return null;
+  const get = await probe(target, "GET");
+  if (get.finalUrl !== target) return get.finalUrl;
+  return null;
 }
 
 export async function GET(request: Request) {
@@ -107,12 +94,12 @@ export async function GET(request: Request) {
     if (blockedHost(current.hostname)) return plain("Host bloqueado", 403);
 
     try {
-      const response = await readLocation(current.href);
-      if (response.status < 300 || response.status >= 400 || !response.location) return json(current.href);
-      const next = new URL(response.location, current);
-      if (next.protocol !== "http:" && next.protocol !== "https:") return json(current.href);
-      if (blockedHost(next.hostname)) return json(current.href);
-      return json(next.href);
+      const next = await readLocation(current.href);
+      if (!next) return json(current.href);
+      const resolved = new URL(next);
+      if (resolved.protocol !== "http:" && resolved.protocol !== "https:") return json(current.href);
+      if (blockedHost(resolved.hostname)) return json(current.href);
+      return json(resolved.href);
     } catch {
       return json(current.href);
     }
